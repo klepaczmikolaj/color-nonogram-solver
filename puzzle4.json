@@ -1,0 +1,42 @@
+{
+    "horizontal": [
+        [{"v": 1, "c": "Yellow"}],
+        [{"v": 2, "c": "Yellow"}],
+        [{"v": 10, "c": "Yellow"}],
+        [{"v": 3, "c": "Yellow"}, {"v": 6, "c": "Yellow"}],
+        [{"v": 15, "c": "Yellow"}],
+        [{"v": 2, "c": "Yellow"}, {"v": 13, "c": "Yellow"}, {"v": 2, "c": "Yellow"}, {"v": 1, "c": "Red"}],
+        [{"v": 18, "c": "Yellow"}, {"v": 1, "c": "Red"}],
+        [{"v": 16, "c": "Yellow"}, {"v": 1, "c": "Red"}],
+        [{"v": 15, "c": "Yellow"}],
+        [{"v": 14, "c": "Yellow"}],
+        [{"v": 12, "c": "Yellow"}],
+        [{"v": 11, "c": "Yellow"}],
+        [{"v": 3, "c": "Yellow"}, {"v": 3, "c": "Yellow"}],
+        [{"v": 16, "c": "Green"}],
+        [{"v": 4, "c": "Green"}, {"v": 7, "c": "Green"}, {"v": 5, "c": "Green"}]
+
+    ],
+    "vertical": [
+        [{"v": 1, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 2, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 1, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 6, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 10, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 10, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 11, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 1, "c": "Yellow"}, {"v": 8, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 1, "c": "Yellow"}, {"v": 8, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 1, "c": "Yellow"}, {"v": 8, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 1, "c": "Yellow"}, {"v": 8, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 10, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 11, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 11, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 12, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 11, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 2, "c": "Yellow"}, {"v": 4, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 5, "c": "Yellow"}, {"v": 2, "c": "Green"}],
+        [{"v": 3, "c": "Yellow"}, {"v": 1, "c": "Green"}],
+        [{"v": 3, "c": "Red"}, {"v": 1, "c": "Green"}]
+    ]
+}

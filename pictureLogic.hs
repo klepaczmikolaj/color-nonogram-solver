@@ -3,9 +3,10 @@ module Main where
     import Data.List
     import System.Console.ANSI
     import Text.JSON.Generic
+    import System.Environment
 
     -- Colors and display
-    palette :: Row
+    palette :: [Color]
     palette = [Black, Red, Green, Yellow, Blue, Magenta, Cyan, White] 
 
     putCharWithColor :: Char -> Color -> IO ()
@@ -14,6 +15,20 @@ module Main where
         setSGR [SetColor Foreground Vivid c]
         putChar x
         setSGR [Reset]
+
+    putIntWithColor :: Int -> Color -> IO ()
+    putIntWithColor x c 
+        | x > 0 && c /= Yellow && c /= Green = do
+            setSGR [SetColor Background Vivid c]
+            setSGR [SetColor Foreground Vivid White]
+            putStr (show x)
+            setSGR [Reset]
+        | x > 0 && (c == Yellow || c == Green) = do
+            setSGR [SetColor Background Vivid c]
+            setSGR [SetColor Foreground Vivid Black]
+            putStr (show x)
+            setSGR [Reset]
+        | otherwise = putStr " "
 
     putColorCell :: Color -> IO ()
     putColorCell c = do
@@ -33,40 +48,79 @@ module Main where
                                     | color == "White"      = White
                                     | otherwise = error "Wrong color"
 
-    displayResult :: Grid -> IO ()
-    displayResult [] = putChar '\n'
-    displayResult (x:xs) = do
-        putSingleLine x
-        displayResult xs
+    displayResult :: Grid -> Puzzle -> IO ()
+    displayResult [] puzzle = do
+        putStr "Inconsistent puzzle\n"
+        displayResultLines init puzzle
+        displayVertLines (getVerticalValue puzzle)
             where
-                putSingleLine [] = putChar '\n'
+                init = replicate sizeHoriz (replicate sizeVert White)
+                sizeHoriz = getPuzzleSizeHoriz puzzle
+                sizeVert = getPuzzleSizeVert puzzle
+    displayResult res puzzle = do
+        putStr "\n"
+        displayResultLines res puzzle
+        displayVertLines (getVerticalValue puzzle)
+
+    displayResultLines :: Grid -> Puzzle -> IO ()
+    displayResultLines [] puzzle = putChar '\n'
+    displayResultLines (x:xs) (Puzzle (hor:hTail) vert) = do
+        putSingleLine x
+        displayLine hor
+        displayResultLines xs (Puzzle hTail vert)
+            where
+                putSingleLine [] = putChar ' '
                 putSingleLine (y:ys) = do
                     if y == Cyan 
-                        then do putCharWithColor 'X' Cyan
-                                --putCharWithColor 'X' Cyan
+                        then do putCharWithColor '\\' Cyan
+                                putCharWithColor '/' Cyan
                         else do putColorCell y
-                               --putColorCell y
-                    
+                                putColorCell y
                     putSingleLine ys
 
-    -- Data structures
+    displayLine :: [Cell] -> IO ()
+    displayLine [] = putChar '\n'
+    displayLine (x:xs) = do
+        putIntWithColor (getCellValue x) (getCellColor x)
+        putChar ' '
+        displayLine xs
+    
+    displayVertLines :: [[Cell]] -> IO ()
+    displayVertLines lines = displayVertLinesPrep linesPrepared
+        where
+            maxLen = maximum (map length lines)
+            linesPrepared = transpose [x ++ (replicate (maxLen - (length x)) (Cell {v=0, c="Black"})) | x <- lines]
+            displayVertLinesPrep [] = putChar '\n'
+            displayVertLinesPrep (x:xs) = do
+                displayVertLine x
+                displayVertLinesPrep xs
+
+    displayVertLine :: [Cell] -> IO ()
+    displayVertLine [] = putChar '\n'
+    displayVertLine (x:xs) = do
+        putIntWithColor (getCellValue x) (getCellColor x)
+        if (getCellValue x) >= 10 then
+            displayVertLine xs
+            else do
+                putChar ' '
+                displayVertLine xs
+
+    -- Data structures and types
     type Row = [Color]
     type Grid = [Row]
-
+    
+    -- deriving data, typeable for decodeJson
     data Cell = Cell
         { v     :: Int
         , c     :: String
-        } deriving (Show, Data, Typeable)
+        } deriving (Data, Typeable)
     
     data Puzzle = Puzzle
         { horizontal    :: [[Cell]]
         , vertical      :: [[Cell]]
-        } deriving (Show, Data, Typeable)
-
-    --data ResultCell = Empty | Color deriving (Show, Data, Typeable)
+        } deriving (Data, Typeable)
     
     --utils
-    
     getPuzzleSizeHoriz :: Puzzle -> Int
     getPuzzleSizeHoriz (Puzzle hor _) = length hor
 
@@ -76,47 +130,49 @@ module Main where
     getCellValue :: Cell -> Int
     getCellValue (Cell value _) = value
     
-    getHorisontalValue :: Puzzle -> [[Cell]]
-    getHorisontalValue (Puzzle hor _) = hor
-    
     getVerticalValue :: Puzzle -> [[Cell]]
     getVerticalValue (Puzzle _ ver) = ver
 
+    getHorisontalValue :: Puzzle -> [[Cell]]
+    getHorisontalValue (Puzzle hor _) = hor
+
     --nub - distinct
-    getRowColorList :: [Cell] -> Row
+    getRowColorList :: [Cell] -> [Color]
     getRowColorList list = nub (getCellListColors list)
         where
             getCellListColors [] = []
             getCellListColors (x:xs) = (getCellColor x) : getCellListColors xs
 
-    getColorList :: Puzzle -> Row
-    getColorList (Puzzle hor vert) = nub (getRowColorList cells)
+    -- puzzle solution logic
+    -- guessing cells that are not deduced n should start from 0
+    solvePuzzleGuess :: Grid -> Puzzle -> Int -> Grid
+    solvePuzzleGuess inputResult (Puzzle puzHoriz puzVert) n
+        | length inputResult == n   = inputResult
+        | fittingResults == []      = error "pusta lista mozliwych rozwiązan"
+        | length fittingResults > 1 = solvePuzzleGuess inputResult (Puzzle puzHoriz puzVert) (n + 1)
+        | otherwise                 = solvePuzzleGuess (head fittingResults) (Puzzle puzHoriz puzVert) (n + 1)
         where
-            cells = (concat hor) ++ (concat vert)
+            (front, resRow : back) = splitAt n inputResult
+            (frontPuz, puzRow : backPuz) = splitAt n puzHoriz
+            rowMatches = getListOfRowMatches puzRow resRow
+            resList = [front ++ (match : back) | match <- rowMatches]
+            fittingResults = checkResultsVert resList puzVert
 
-    accessHorizontalRow :: Puzzle -> Int -> [Cell]
-    accessHorizontalRow (Puzzle hor _) id = hor !! id
+    checkResultsVert :: [Grid] -> [[Cell]] -> [Grid]
+    checkResultsVert [] _ = []
+    checkResultsVert (res:resTail) puzVert
+        | checkRes (transpose res) puzVert    = res : (checkResultsVert resTail puzVert)
+        | otherwise = (checkResultsVert resTail puzVert)
+        where
+            checkRes [] [] = True
+            checkRes (row:rowTail) (puz:puzTail) 
+                | (getListOfRowMatches puz row) == [] = False
+                | otherwise = checkRes rowTail puzTail
 
-    accessVerticalRow :: Puzzle -> Int -> [Cell]
-    accessVerticalRow (Puzzle _ vert) id = vert !! id
-
-    modifyResultCell :: Int -> Int -> Color -> Grid ->  Grid
-    modifyResultCell row column value result = replaceN row (replaceN column value (result !! row) ) result
-    replaceN _ _ [] = []
-    replaceN n value (x:xs)
-      | n == 0 = value:xs
-      | otherwise = x:replaceN (n-1) value xs
-
-    modifyResultRange :: Int -> Int -> Int -> Color -> Grid ->  Grid
-    modifyResultRange row columnStart count value result
-        |   count == 1 = modifyResultCell row columnStart value result
-        |   count > 1  = modifyResultCell row columnStart value (modifyResultRange row (columnStart + 1) (count - 1)value result)
-        |   otherwise  = error "Wrong count value"
-
-    -- algorithm logic
+    -- deduction logic
     -- Cyan is considered as 'X' character, White is a cell that is not yet filled
-    solvePuzzle :: Puzzle -> Grid
-    solvePuzzle puzzle = converge makeDeduction init puzzle
+    solvePuzzleDeduction :: Puzzle -> Grid
+    solvePuzzleDeduction puzzle = converge makeDeduction init puzzle
         where
             init = replicate sizeHoriz (replicate sizeVert White)
             sizeHoriz = getPuzzleSizeHoriz puzzle
@@ -142,31 +198,43 @@ module Main where
     getListOfRowMatches [] [] = [[]]
     getListOfRowMatches puzzleRow [] = []
     getListOfRowMatches puzzleRow (White:inputRowTail) = getListOfMatchesColor puzzleRow Cyan inputRowTail ++ 
-                                                            getListOfMatchesColor puzzleRow Red inputRowTail
+        concat [getListOfMatchesColor puzzleRow color inputRowTail |
+                color <- getRowColorList puzzleRow] 
     getListOfRowMatches puzzleRow (color:inputRowTail) = getListOfMatchesColor puzzleRow color inputRowTail
 
     getListOfMatchesColor :: [Cell] -> Color -> Row -> [Row]
     getListOfMatchesColor conds Cyan inputRowTail = [Cyan : row | row <- getListOfRowMatches conds inputRowTail]
 
     --only one condition for row
-    getListOfMatchesColor [cond] Red inputRowTail = [replicate condVal Red ++ replicate (tailLen + 1 - condVal) Cyan |
-            (tailLen + 1) >= condVal && all (/=Cyan) front && all (/=Red) back]
+    getListOfMatchesColor [cond] color inputRowTail
+            | condColor == color    = [replicate condVal color ++ replicate (tailLen + 1 - condVal) Cyan |
+                (tailLen + 1) >= condVal && all (\x -> (x == White || x == color)) front && all (/=color) back]
+            | otherwise     = []
         where
             (front, back) = splitAt (condVal-1) inputRowTail
             condVal = getCellValue cond
+            condColor = getCellColor cond
             tailLen = length inputRowTail
 
     --more than one condition for row
-    getListOfMatchesColor (cond:condTail) Red inputRowTail = [replicate condVal Red ++ Cyan : row |
-            tailLen > condVal && all (/=Cyan) front && space /= Red,
-            row <- getListOfRowMatches condTail back]
+    getListOfMatchesColor (cond:cond2:condTail) color inputRowTail
+            | condColor == color && condColor == cond2Color     = [replicate condVal color ++ Cyan : row |
+                tailLen > condVal && all (\x -> (x == White || x == color)) front && (space == White || space == Cyan),
+                row <- getListOfRowMatches (cond2:condTail) back]
+            | condColor == color && condColor /= cond2Color     = [replicate condVal color ++ row |
+                (tailLen + 1) > condVal && all (\x -> (x == White || x == color)) front && space /= color,
+                row <- getListOfRowMatches (cond2:condTail) (space:back)]
+            | otherwise = []
         where
             (front, space : back) = splitAt (condVal-1) inputRowTail
             condVal = getCellValue cond
+            condColor = getCellColor cond
+            cond2Val = getCellValue cond2
+            cond2Color = getCellColor cond2
             tailLen = length inputRowTail
 
     getRowListCommon :: [Row] -> Row
-    getRowListCommon [] = error "common row list empty"
+    getRowListCommon [] = []
     getRowListCommon [x] = x
     getRowListCommon [x, y] = getRowPairCommon x y
     getRowListCommon (x:y:ys) = getRowListCommon ((getRowPairCommon x y) : ys)
@@ -180,18 +248,9 @@ module Main where
     
     -- Main 
     main = do
-        inputPuzzle <- readFile "puzzleSingleColor.json"
+        args <- getArgs
+        inputPuzzle <- readFile (head args)
         let puzzle = (decodeJSON inputPuzzle :: Puzzle)
-        let sol = solvePuzzle puzzle
-        print sol
-        displayResult sol
-        print puzzle
-
-        -- testing
-        --let row1 = [White, Red, Red, White, Cyan, Cyan]
-        --let row2 = [White, White, Red, White, Cyan, White]
-        --let row3 = [White, Red, Red, White, Red, White]
-        --print (getRowPairCommon row1 row2)
-        --print (getRowListCommon [row1, row2, row3])
-
-        
+        let solDeduction = solvePuzzleDeduction puzzle
+        let solution = solvePuzzleGuess solDeduction puzzle 0
+        displayResult solution puzzle

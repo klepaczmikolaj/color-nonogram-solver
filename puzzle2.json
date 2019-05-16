@@ -1,0 +1,26 @@
+{
+    "horizontal": [
+        [{"v": 2, "c": "Black"}],
+        [{"v": 1, "c": "Black"}, {"v": 1, "c": "Blue"}, {"v": 2, "c": "Black"}],
+        [{"v": 1, "c": "Red"}, {"v": 4, "c": "Black"}],
+        [{"v": 2, "c": "Black"}],
+        [{"v": 5, "c": "Black"}],
+        [{"v": 2, "c": "Black"}, {"v": 3, "c": "Black"}],
+        [{"v": 3, "c": "Black"}, {"v": 3, "c": "Black"}],
+        [{"v": 7, "c": "Black"}],
+        [{"v": 1, "c": "Red"}, {"v": 4, "c": "Black"}],
+        [{"v": 2, "c": "Red"}, {"v": 2, "c": "Black"}]
+    ],
+    "vertical": [
+        [{"v": 1, "c": "Red"}],
+        [{"v": 2, "c": "Black"}, {"v": 3, "c": "Black"}],
+        [{"v": 1, "c": "Black"}, {"v": 1, "c": "Blue"}, {"v": 6, "c": "Black"}],
+        [{"v": 5, "c": "Black"}, {"v": 2, "c": "Black"}, {"v": 1, "c": "Red"}],
+        [{"v": 2, "c": "Black"}, {"v": 2, "c": "Black"}, {"v": 1, "c": "Black"}, {"v": 2, "c": "Red"}],
+        [{"v": 4, "c": "Black"}],
+        [{"v": 4, "c": "Black"}],
+        [{"v": 3, "c": "Black"}],
+        [{"v": 3, "c": "Black"}],
+        [{"v": 2, "c": "Black"}]
+    ]
+}
