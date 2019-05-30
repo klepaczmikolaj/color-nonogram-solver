@@ -52,7 +52,7 @@ module Main where
     displayResult [] puzzle = do
         putStr "Inconsistent puzzle\n"
         displayResultLines init puzzle
-        displayVertLines (getVerticalValue puzzle)
+        displayPuzVertLines (getVerticalValue puzzle)
             where
                 init = replicate sizeHoriz (replicate sizeVert White)
                 sizeHoriz = getPuzzleSizeHoriz puzzle
@@ -60,13 +60,13 @@ module Main where
     displayResult res puzzle = do
         putStr "\n"
         displayResultLines res puzzle
-        displayVertLines (getVerticalValue puzzle)
+        displayPuzVertLines (getVerticalValue puzzle)
 
     displayResultLines :: Grid -> Puzzle -> IO ()
     displayResultLines [] puzzle = putChar '\n'
     displayResultLines (x:xs) (Puzzle (hor:hTail) vert) = do
         putSingleLine x
-        displayLine hor
+        displayPuzzleHorLine hor
         displayResultLines xs (Puzzle hTail vert)
             where
                 putSingleLine [] = putChar ' '
@@ -78,22 +78,22 @@ module Main where
                                 putColorCell y
                     putSingleLine ys
 
-    displayLine :: [Cell] -> IO ()
-    displayLine [] = putChar '\n'
-    displayLine (x:xs) = do
+    displayPuzzleHorLine :: [Cell] -> IO ()
+    displayPuzzleHorLine [] = putChar '\n'
+    displayPuzzleHorLine (x:xs) = do
         putIntWithColor (getCellValue x) (getCellColor x)
         putChar ' '
-        displayLine xs
+        displayPuzzleHorLine xs
     
-    displayVertLines :: [[Cell]] -> IO ()
-    displayVertLines lines = displayVertLinesPrep linesPrepared
+    displayPuzVertLines :: [[Cell]] -> IO ()
+    displayPuzVertLines lines = displayPuzVertLinesPrep linesPrepared
         where
             maxLen = maximum (map length lines)
             linesPrepared = transpose [x ++ (replicate (maxLen - (length x)) (Cell {v=0, c="Black"})) | x <- lines]
-            displayVertLinesPrep [] = putChar '\n'
-            displayVertLinesPrep (x:xs) = do
+            displayPuzVertLinesPrep [] = putChar '\n'
+            displayPuzVertLinesPrep (x:xs) = do
                 displayVertLine x
-                displayVertLinesPrep xs
+                displayPuzVertLinesPrep xs
 
     displayVertLine :: [Cell] -> IO ()
     displayVertLine [] = putChar '\n'
